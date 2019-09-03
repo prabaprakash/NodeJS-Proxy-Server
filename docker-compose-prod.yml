@@ -7,7 +7,7 @@ networks:
     external: false
 
 services:
-  www:
+  proxy:
     build:
       context: .
       dockerfile: Dockerfile
