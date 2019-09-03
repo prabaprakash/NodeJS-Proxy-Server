@@ -16,7 +16,7 @@ var server = http.createServer(function (req, res) {
 
     console.log("Proxy HTTP request for:", target);
 
-    var proxy = httpProxy.createProxyServer({});
+    var proxy = httpProxy.createProxyServer({ ws: true });
     proxy.on("error", function (err, req, res) {
         console.log("proxy error", err);
         res.end();
@@ -42,10 +42,19 @@ var getHostPortFromString = function (hostString, defaultPort) {
 };
 
 server.addListener('connect', function (req, socket, bodyhead) {
+    req.on('data', chunk => {
+        console.log(chunk.toString());
+    });
+    req.on('end', () => {
+    })
     var hostPort = getHostPortFromString(req.url, 443);
+    const reqUrl = url.parse(req.url, true);
     var hostDomain = hostPort[0];
     var port = parseInt(hostPort[1]);
+    console.log('--------------------------------------------------------------------');
+    console.log("request url:"+req.url);
     console.log("Proxying HTTPS request for:", hostDomain, port);
+    console.log('--------------------------------------------------------------------');
     var proxySocket = new net.Socket();
     proxySocket.connect(port, hostDomain, function () {
         proxySocket.write(bodyhead);
@@ -79,3 +88,9 @@ server.addListener('connect', function (req, socket, bodyhead) {
     });
 
 });
+
+var proxy = httpProxy.createProxyServer({ws: true})
+server.on('upgrade', function (req, socket, head) {
+    console.log('socket baby');
+    proxy.ws(req, socket, head, {target:sites(req.headers.host)})
+  })
